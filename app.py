@@ -233,6 +233,21 @@ def load_data(uploaded_file, country):
     df = df.dropna(subset=["date"]).sort_values("date").reset_index(drop=True)
     df = df.ffill()
 
+    # ── Futures price → implied yield conversion ──
+    # Bank bill and SOFR futures are quoted as price (e.g. 96.40).
+    # Convert to implied yield: yield = 100 - price.
+    futures_aliases = [
+        "third_bank_bill_contract", "3rd_bank_bill", "bank_bill_3rd",
+        "au_bank_bill", "bank_bill",
+        "sofr_3rd", "3rd_sofr", "sofr_futures", "third_sofr_contract",
+        "fed_funds_3rd", "3rd_fed_funds",
+    ]
+    for col in list(df.columns):
+        if col in ("date", "bond_yield"):
+            continue
+        if col.lower().replace(" ", "_") in futures_aliases or col in futures_aliases:
+            df[col] = 100 - df[col]
+
     return df, dep_var_col, variable_flags, original_names
 
 
